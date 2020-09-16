@@ -1,0 +1,11 @@
+<div class="container">
+  <h2>  User Data </h2>
+  <form #userForm="ngForm" (ngSubmit)="onSubmit(userForm.value.name)">
+    <div class="form-group">
+      <label>Name</label>
+      <input type="text" class="form-control" name="name" ngModel>
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+</div>
+<app-video-board ></app-video-board>
