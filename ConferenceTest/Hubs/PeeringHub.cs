@@ -51,6 +51,9 @@ namespace ConferenceTest.Hubs
         public async Task SendIceCandidate(string iceCandidate, string peerUser)
             => await Clients.Client(peerUser).SendAsync("AddIceCandidate", iceCandidate, Context.ConnectionId);
 
+        public async Task test(string peeruser)
+            => await Clients.Client(peeruser).SendAsync("testreceived");
+
         //public async Task SendIceCandidate(string candidate, string peerUser)
         //    => await Clients.Client(peerUser).SendAsync("ReceiveIceCandidate", candidate, Context.ConnectionId);
 

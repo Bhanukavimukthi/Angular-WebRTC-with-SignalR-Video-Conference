@@ -11,7 +11,7 @@ import { LayoutModule } from '@angular/cdk/layout';
 import { UserNameComponent } from './user-name/user-name.component';
 import { VideoBoardComponent } from './video-board/video-board.component';
 import { LeaveConferenceComponent } from './leave-conference/leave-conference.component';
-import { SignalrService } from './signalr.service'
+//import { SignalrService } from './signalr.service'
 
 const appRoutes: Routes = [
   //{
@@ -51,7 +51,7 @@ const appRoutes: Routes = [
     HttpClientModule,
     LayoutModule
   ],
-  providers: [SignalrService],
+  providers: [],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

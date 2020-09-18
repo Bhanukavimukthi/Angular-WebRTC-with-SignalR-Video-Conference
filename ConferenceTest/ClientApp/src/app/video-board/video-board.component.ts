@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, ElementRef, Input } from '@angular/core';
-import { localvideo, LocalClient } from '../signalr.service';
+//import {  LocalClient } from '../signalr.service';
 
 
 @Component({

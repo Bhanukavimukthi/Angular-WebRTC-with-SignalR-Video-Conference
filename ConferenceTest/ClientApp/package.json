@@ -35,6 +35,7 @@
     "rxjs": "^6.6.3",
     "simple-peer": "^9.7.2",
     "webrtc": "^1.14.1",
+    "webrtc-adapter": "^7.7.0",
     "zone.js": "0.9.1"
   },
   "devDependencies": {

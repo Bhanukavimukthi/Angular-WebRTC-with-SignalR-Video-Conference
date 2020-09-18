@@ -4,174 +4,39 @@ import { connect } from 'http2';
 import 'webrtc-adapter';
 import 'webrtc';
 
+/**
+ * HUB CONNECTION AND CONFIGURATION
+ * */
 
-//@Injectable({
-//  providedIn: 'root'
-//})
+const connection = new signalR.HubConnectionBuilder()
+  .withUrl("/peeringHub")
+  .configureLogging(signalR.LogLevel.Information)
+  .build();
 
-let localClient;
-
-@Injectable({ providedIn: 'root' })
-export class SignalrService {
-  public connection: signalR.HubConnection;
-  public thenable: Promise<void>
-
-  constructor() {
-    this.connection = new signalR.HubConnectionBuilder()
-      .withUrl("/peeringHub")
-      .configureLogging(signalR.LogLevel.Debug)
-      .build();
-
-    (async () => {
-      try {
-        await this.connection.start();
-        console.log("Client connected to Hub");
-      } catch (err) {
-        console.log(err);
-        console.log("clinet not connected to hub");
-        //setTimeout(() => start(), 10000);
-
-        //this.connection.onclose(async () => { await start(); });
-
-        // Start the connection.
-        //start();
-      }
-    })();
-    this.connection.on("ReceiveOffer", async (offer, peerUser) => {
-      console.log("STEP 3: offer received");
-      offer = new RTCSessionDescription(JSON.parse(offer));
-      console.log(offer);
-
-      let peering = new Peering(peerUser);
-      peering.createPeerConnection();
-
-      // insert the offer as the remote description
-      await peering.peerConnection.setRemoteDescription(offer);
-
-      // ONLY THEN we create answer
-      let answer = await peering.createAnswer();
-
-      await this.connection.invoke("SendAnswer", JSON.stringify(answer), peerUser);
-      console.log("STEP 5: answer sended.");
-
-      localClient.peerings.push(peering);
-    });
-
-    this.connection.on("ReceiveAnswer", async (answer, peerUser) => {
-      let peering = localClient.getPeeringByPeerClient(peerUser);
-
-      // insert the answer as the remote description
-      answer = new RTCSessionDescription(JSON.parse(answer));
-      await peering.peerConnection.setRemoteDescription(answer);
-
-      console.log("PEERING ACHIEVED");
-    });
-
-    this.connection.on("AddIceCandidate", (iceCandidate, peer) => {
-      iceCandidate = JSON.parse(iceCandidate);
-      iceCandidate = new RTCIceCandidate(iceCandidate);
-
-      let peering = localClient.getPeeringByPeerClient(peer);
-      //console.log(peering);
-      //console.log(peering.peerConnection);
-
-      try {
-        peering.peerConnection.addIceCandidate(iceCandidate);
-      }
-      catch (err) {
-
-      }
-    });
-
-
+async function start() {
+  try {
+    await connection.start();
+    console.log("Client connected to Hub");
+  } catch (err) {
+    console.log(err);
+    setTimeout(() => start(), 5000);
   }
-  // start() {
-  //  this.thenable = this.connection.start();
-  //  this.thenable
-  //    .then(() => console.log('Connection started!'))
-  //    .catch(err => console.log('Error while establishing connection :('));
-  //}
+};
 
-  async invokable_initVideoconference(roomId, userName) {
-    // Adding to group
-    //this.start();
-    //await this.connection.start();
-    //console.log("Client connected to Hub");
+//connection.onclose(async () => { await start(); });
 
-     await this.connection.invoke("Connect", roomId, userName).catch(err => console.error(err));
-    console.log("user added");
-    // Creating local profil and start to display own video
-
-
-    localClient = new LocalClient(roomId, userName);
-   
-    await localClient.getUserMedia();
-    await this.startPeerings();
-
-  }
-
-
-  async startPeerings() {
-
-    //create a peerConnection for each member of the hub
-    try {
-
-      let allCurrentUserInRoom = await this.connection.invoke("GetAllActiveConnectionsInRoom", localClient.roomId);
-      allCurrentUserInRoom = JSON.parse(allCurrentUserInRoom);
-      console.log(allCurrentUserInRoom);
-    console.log("1st log");
-
-
-      // send offer for each person already in the room
-    await asyncForEach(allCurrentUserInRoom, async (user) => {
-      console.log("2nd log");
-      let peering = new Peering(user["ConnectionId"]);
-        peering.createPeerConnection();
-      let offer = await peering.createOffer();
-
-      console.log("STEP 2: offer sended.");
-        await this.connection.invoke("SendOffer", JSON.stringify(offer), user["ConnectionId"]);
-        //console.log("STEP 2: offer sended.");
-
-        localClient.peerings.push(peering);
-      })
-    }
-    catch (err) {
-      console.log(err);
-
-      //console.log('asddfs');
-    }
-  }
-}
-
-
-export class localvideo {
-  localstream: any;
-
-  //constructor() {
-  //  super();
-  //  this.localstream = localStream;
-  //}
-
-  //async localVideofn(localVideo) {
-  //  this.localVideo = localVideo;
-  //  console.log("got the localvideo id");
-  //}
-}
-
-
+// Start the connection.
+start();
 
 
 export class LocalClient {
   roomId: any;
-  userName: any;
-  userMedia: any;
-  localStream: any;
-  localVideo: any;
-  peerings: any[];
-
-
-   constructor(roomId, userName) {
+    userName: any;
+    userMedia: any;
+    localStream: any;
+    localVideo: any;
+    peerings: any[];
+  constructor(roomId, userName) {
     this.roomId = roomId;
     this.userName = userName;
 
@@ -184,22 +49,16 @@ export class LocalClient {
     this.getPeeringByPeerClient;
   }
 
-  //get localstream(): any {
-  //  return this.localStream;
-  //}
-
-
-
   async getUserMedia() {
     if (navigator.getUserMedia) {
       try {
+        this.localVideo = document.getElementById('localVideo');
         const constraints = { 'video': true, 'audio': true };
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
         this.localStream = stream;
-        this.localVideo = document.getElementById('localVideo');
+
         this.localVideo.srcObject = stream;
-        console.log("feed recieved")
       } catch (err) {
         console.error('Error getting user media.', err);
       }
@@ -220,17 +79,13 @@ export class LocalClient {
 }
 
 const peerConnectionConfig = { 'iceServers': [{ 'urls': 'stun:stun.services.mozilla.com' }, { 'urls': 'stun:stun.l.google.com:19302' }] };
-
-class Peering extends SignalrService {
+class Peering {
   peerClient: any;
-  peerConnection: any;
-  remoteVideo: any;
-  remoteStream: any;
-  generatedId: string;
-
+    peerConnection: any;
+    remoteVideo: any;
+    remoteStream: any;
+    generatedId: string;
   constructor(peerClient) {
-      
-      super();
     this.peerClient = peerClient;
     this.peerConnection;
 
@@ -239,7 +94,7 @@ class Peering extends SignalrService {
     this.generatedId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
   }
 
-  async createPeerConnection() {
+  createPeerConnection() {
     this.peerConnection = new RTCPeerConnection(peerConnectionConfig);
     this.addTracksToPeerConnection(localClient.localStream);
     this.peerConnection.onicecandidate = (event) => this.onDetectIceCandidate(event, this.peerClient);
@@ -270,16 +125,16 @@ class Peering extends SignalrService {
     }
   }
 
-  async onDetectIceCandidate(event, peerClient) {
+  onDetectIceCandidate(event, peerClient) {
     if (event.candidate != null) {
       let candidate = new RTCIceCandidate(event.candidate);
-      this.connection.invoke("SendIceCandidate", JSON.stringify(candidate), peerClient);
+      connection.invoke("SendIceCandidate", JSON.stringify(candidate), peerClient);
       console.log("Ice candidate send.");
     }
   }
 
-  async addIceCandidate(iceCandidate) {
-    await this.peerConnection.addIceCandidate(iceCandidate);
+  addIceCandidate(iceCandidate) {
+    this.peerConnection.addIceCandidate(iceCandidate);
   }
 
   addTracksToPeerConnection(stream) {
@@ -310,12 +165,100 @@ class Peering extends SignalrService {
 }
 
 
+/**
+ * SCRIPT
+ */
+let localClient;
+export async function invokable_initVideoconference(roomId, userName) {
+  // Adding to group
+  connection.invoke("Connect", roomId, userName).catch(err => console.error(err));
+
+  // Creating local profil and start to display own video
+  localClient = new LocalClient(roomId, userName);
+  await localClient.getUserMedia();
+
+  await startPeerings();
+}
+
+async function startPeerings() {
+  //create a peerConnection for each member of the hub
+  try {
+    let allCurrentUserInRoom = await connection.invoke("GetAllActiveConnectionsInRoom", localClient.roomId);
+    allCurrentUserInRoom = JSON.parse(allCurrentUserInRoom);
+    console.log(allCurrentUserInRoom);
+    //console.log("adsfas");
+
+    // send offer for each person already in the room
+    asyncForEach(allCurrentUserInRoom, async (user) => {
+      let peering = new Peering(user["ConnectionId"]);
+      peering.createPeerConnection();
+      let offer = await peering.createOffer();
+
+      await connection.invoke("SendOffer", JSON.stringify(offer), user["ConnectionId"]);
+      console.log("STEP 2: offer sended.");
+
+      localClient.peerings.push(peering);
+    })
+  }
+  catch (err) {
+    console.log(err);
+  }
+}
+
+connection.on("ReceiveOffer", async (offer, peerUser) => {
+  console.log("STEP 3: offer received");
+  offer = new RTCSessionDescription(JSON.parse(offer));
+  console.log(offer);
+
+  let peering = new Peering(peerUser);
+  peering.createPeerConnection();
+
+  // insert the offer as the remote description
+  await peering.peerConnection.setRemoteDescription(offer);
+
+  // ONLY THEN we create answer
+  let answer = await peering.createAnswer();
+
+  await connection.invoke("SendAnswer", JSON.stringify(answer), peerUser);
+  console.log("STEP 5: answer sended.");
+
+  localClient.peerings.push(peering);
+});
+
+connection.on("ReceiveAnswer", async (answer, peerUser) => {
+  let peering = localClient.getPeeringByPeerClient(peerUser);
+
+  // insert the answer as the remote description
+  answer = new RTCSessionDescription(JSON.parse(answer));
+  await peering.peerConnection.setRemoteDescription(answer);
+
+  console.log("PEERING ACHIEVED");
+});
+
+connection.on("AddIceCandidate", (iceCandidate, peer) => {
+  iceCandidate = JSON.parse(iceCandidate);
+  iceCandidate = new RTCIceCandidate(iceCandidate);
+
+  let peering = localClient.getPeeringByPeerClient(peer);
+  //console.log(peering);
+  //console.log(peering.peerConnection);
+
+  try {
+    peering.peerConnection.addIceCandidate(iceCandidate);
+  }
+  catch (err) {
+
+  }
+});
+
+connection.on("PeerHasLeft", (peerClient) => {
+  console.warn(peerClient + " left the room");
+  localClient.deletePeeringWith(peerClient);
+});
 
 //helper to do foreach with async
 async function asyncForEach(array, callback) {
   for (let index = 0; index < array.length; index++) {
-    console.log("array");
     await callback(array[index], index, array);
   }
 }
-
