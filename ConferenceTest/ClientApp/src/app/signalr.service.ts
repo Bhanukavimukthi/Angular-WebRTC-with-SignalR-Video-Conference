@@ -172,7 +172,7 @@ let localClient;
 export async function invokable_initVideoconference(roomId, userName) {
   // Adding to group
   connection.invoke("Connect", roomId, userName).catch(err => console.error(err));
-
+  console.log("Room Name", roomId);
   // Creating local profil and start to display own video
   localClient = new LocalClient(roomId, userName);
   await localClient.getUserMedia();
@@ -204,6 +204,14 @@ async function startPeerings() {
     console.log(err);
   }
 }
+
+export async function closevideo(){
+  connection.invoke("userleft").catch(err => console.error(err));
+  console.log("video closed");
+
+}
+
+
 
 connection.on("ReceiveOffer", async (offer, peerUser) => {
   console.log("STEP 3: offer received");

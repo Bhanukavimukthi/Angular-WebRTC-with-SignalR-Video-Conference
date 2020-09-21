@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { invokable_initVideoconference } from '../signalr.service';
+import { RoomNameComponent } from '../room-name/room-name.component';
 
 @Component({
   selector: 'app-rtc',
@@ -11,10 +12,12 @@ export class UserNameComponent implements OnInit {
   //userName = '';
 
   joined = false;
+  roomName: string;
+  @Input() RoomName: string;
 
-  roomName = 'Test1';
-
-  constructor(/*private signalrservice: SignalrService*/) { }
+  constructor() {
+    this.roomName = this.RoomName;
+  }
 
 
   ngOnInit() {

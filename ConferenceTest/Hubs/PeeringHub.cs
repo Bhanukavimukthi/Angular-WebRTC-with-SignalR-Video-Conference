@@ -42,6 +42,18 @@ namespace ConferenceTest.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
+        public async Task userleft()
+        {
+            UserInRoom userDisconnected = CurrentConnections.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId);
+
+            // then we send a message to every client of the room for them to act accordingly
+            await Clients.OthersInGroup(userDisconnected.RoomId).SendAsync("peerHasLeft", userDisconnected.ConnectionId);
+            await Groups.RemoveFromGroupAsync(userDisconnected.ConnectionId, userDisconnected.RoomId);
+
+            if (userDisconnected != null)
+                CurrentConnections.Remove(userDisconnected);
+        }
+
         public async Task SendOffer(string offer, string peerUser)
             => await Clients.Client(peerUser).SendAsync("ReceiveOffer", offer, Context.ConnectionId);
 

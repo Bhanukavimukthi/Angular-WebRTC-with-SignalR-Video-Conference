@@ -11,6 +11,8 @@ import { LayoutModule } from '@angular/cdk/layout';
 import { UserNameComponent } from './user-name/user-name.component';
 import { VideoBoardComponent } from './video-board/video-board.component';
 import { LeaveConferenceComponent } from './leave-conference/leave-conference.component';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { RoomNameComponent } from './room-name/room-name.component';
 //import { SignalrService } from './signalr.service'
 
 const appRoutes: Routes = [
@@ -20,7 +22,7 @@ const appRoutes: Routes = [
   //},
   {
     path: 'rtc',
-    component: UserNameComponent,
+    component: RoomNameComponent,
   },
   {
     path: '',
@@ -39,6 +41,7 @@ const appRoutes: Routes = [
     AppComponent,
     UserNameComponent,
     VideoBoardComponent,
+    RoomNameComponent,
     //LeaveConferenceComponent
   ],
   imports: [
@@ -51,7 +54,7 @@ const appRoutes: Routes = [
     HttpClientModule,
     LayoutModule
   ],
-  providers: [],
+  providers: [NgbActiveModal],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

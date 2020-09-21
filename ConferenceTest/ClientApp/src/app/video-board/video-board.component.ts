@@ -1,6 +1,5 @@
 import { Component, OnInit, ViewChild, ElementRef, Input } from '@angular/core';
-//import {  LocalClient } from '../signalr.service';
-
+import { closevideo } from '../signalr.service';
 
 @Component({
   selector: 'app-video-board',
@@ -8,6 +7,13 @@ import { Component, OnInit, ViewChild, ElementRef, Input } from '@angular/core';
 //  styleUrls: ['./video-board.component.scss']
 })
 export class VideoBoardComponent implements OnInit {
+
+  constructor() { }
+
+  click() {
+    closevideo();
+  }
+
   //@Input()
   //localclient: LocalClient;
 
