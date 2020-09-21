@@ -12,12 +12,8 @@ export class UserNameComponent implements OnInit {
   //userName = '';
 
   joined = false;
-  roomName: string;
-  @Input() RoomName: string;
 
-  constructor() {
-    this.roomName = this.RoomName;
-  }
+  constructor() { }
 
 
   ngOnInit() {
@@ -25,8 +21,8 @@ export class UserNameComponent implements OnInit {
   }
 
 
-  onSubmit(userName: any) {
-       invokable_initVideoconference(this.roomName, userName);
+  onSubmit(value: any) {
+    invokable_initVideoconference(value.room, value.name);
     this.joined = true;
 
     //console.log('Name = ' + name);

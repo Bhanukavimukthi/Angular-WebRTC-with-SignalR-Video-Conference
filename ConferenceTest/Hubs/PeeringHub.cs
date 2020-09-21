@@ -44,10 +44,11 @@ namespace ConferenceTest.Hubs
 
         public async Task userleft()
         {
+
             UserInRoom userDisconnected = CurrentConnections.FirstOrDefault(x => x.ConnectionId == Context.ConnectionId);
 
             // then we send a message to every client of the room for them to act accordingly
-            await Clients.OthersInGroup(userDisconnected.RoomId).SendAsync("peerHasLeft", userDisconnected.ConnectionId);
+            await Clients.OthersInGroup(userDisconnected.RoomId).SendAsync("userLeft", userDisconnected.ConnectionId);
             await Groups.RemoveFromGroupAsync(userDisconnected.ConnectionId, userDisconnected.RoomId);
 
             if (userDisconnected != null)

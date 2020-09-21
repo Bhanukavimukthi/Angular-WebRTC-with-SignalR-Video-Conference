@@ -12,6 +12,8 @@ export class VideoBoardComponent implements OnInit {
 
   click() {
     closevideo();
+    window.location.reload();
+
   }
 
   //@Input()

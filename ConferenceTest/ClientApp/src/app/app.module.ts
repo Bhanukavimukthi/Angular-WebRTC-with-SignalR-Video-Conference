@@ -22,7 +22,7 @@ const appRoutes: Routes = [
   //},
   {
     path: 'rtc',
-    component: RoomNameComponent,
+    component: UserNameComponent,
   },
   {
     path: '',

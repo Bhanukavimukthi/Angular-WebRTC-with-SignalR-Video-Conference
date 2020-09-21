@@ -1,9 +1,13 @@
 <div *ngIf="!joined">
   <!--<div class="container">-->
   <h2>  User Data </h2>
-  <form #userForm="ngForm" (ngSubmit)="onSubmit(userForm.value.name)">
+  <form #userForm="ngForm" (ngSubmit)="onSubmit(userForm.value)">
     <div class="form-group">
-      <label>Name</label>
+      <label>Room Name</label>
+      <input type="text" class="form-control" name="room" ngModel>
+    </div>
+    <div class="form-group">
+      <label>User Name</label>
       <input type="text" class="form-control" name="name" ngModel>
     </div>
     <button type="submit" class="btn btn-primary">Submit</button>

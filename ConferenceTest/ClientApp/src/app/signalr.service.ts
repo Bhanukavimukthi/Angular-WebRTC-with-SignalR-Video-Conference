@@ -206,8 +206,10 @@ async function startPeerings() {
 }
 
 export async function closevideo(){
-  connection.invoke("userleft").catch(err => console.error(err));
+   connection.invoke("userleft").catch(err => console.error(err));
+  localClient.getUserMedia();
   console.log("video closed");
+   //connection.stop();
 
 }
 
@@ -263,6 +265,15 @@ connection.on("PeerHasLeft", (peerClient) => {
   console.warn(peerClient + " left the room");
   localClient.deletePeeringWith(peerClient);
 });
+
+connection.on("userLeft", (peerClient) => {
+  console.warn(peerClient + " left the call Room");
+  localClient.deletePeeringWith(peerClient);
+  localClient.getUserMedia();
+
+});
+
+
 
 //helper to do foreach with async
 async function asyncForEach(array, callback) {
