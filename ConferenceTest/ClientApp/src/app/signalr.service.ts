@@ -49,20 +49,31 @@ export class LocalClient {
     this.getPeeringByPeerClient;
   }
 
-  async getUserMedia() {
+  async getUserMedia(streamstatus: boolean) {
     if (navigator.getUserMedia) {
       try {
         this.localVideo = document.getElementById('localVideo');
         const constraints = { 'video': true, 'audio': true };
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        const tracks = stream.getTracks();
+        if (streamstatus = true) {
+          this.localStream = stream;
 
-        this.localStream = stream;
+          this.localVideo.srcObject = stream;
+        }
+        else {
+          tracks.forEach(function (track) {
+            track.stop();
+          });
+          this.localStream = null;
+          this.localVideo.srcObject = null;
 
-        this.localVideo.srcObject = stream;
+        }
       } catch (err) {
         console.error('Error getting user media.', err);
       }
     }
+
     else {
       console.log('Your browser does not support getUserMedia API');
     }
@@ -81,12 +92,14 @@ export class LocalClient {
 const peerConnectionConfig = { 'iceServers': [{ 'urls': 'stun:stun.services.mozilla.com' }, { 'urls': 'stun:stun.l.google.com:19302' }] };
 class Peering {
   peerClient: any;
+ // userName: any;
     peerConnection: any;
     remoteVideo: any;
     remoteStream: any;
     generatedId: string;
   constructor(peerClient) {
     this.peerClient = peerClient;
+ //   this.userName = userName
     this.peerConnection;
 
     this.remoteVideo;
@@ -171,11 +184,13 @@ class Peering {
 let localClient;
 export async function invokable_initVideoconference(roomId, userName) {
   // Adding to group
-  connection.invoke("Connect", roomId, userName).catch(err => console.error(err));
+  let location = Math.random().toString(36).substring(2, 15);
+
+  connection.invoke("Connect", roomId, userName, location).catch(err => console.error(err));
   console.log("Room Name", roomId);
   // Creating local profil and start to display own video
   localClient = new LocalClient(roomId, userName);
-  await localClient.getUserMedia();
+  await localClient.getUserMedia(true);
 
   await startPeerings();
 }
@@ -185,12 +200,16 @@ async function startPeerings() {
   try {
     let allCurrentUserInRoom = await connection.invoke("GetAllActiveConnectionsInRoom", localClient.roomId);
     allCurrentUserInRoom = JSON.parse(allCurrentUserInRoom);
-    console.log(allCurrentUserInRoom);
+    console.log("all users",allCurrentUserInRoom);
     //console.log("adsfas");
+
+    //Users in Room
+    //connection.invoke("allUsers", localClient.roomId);
 
     // send offer for each person already in the room
     asyncForEach(allCurrentUserInRoom, async (user) => {
       let peering = new Peering(user["ConnectionId"]);
+      console.log("connectionID peering", user["ConnectionId"] );
       peering.createPeerConnection();
       let offer = await peering.createOffer();
 
@@ -218,7 +237,7 @@ export async function closevideo(){
 connection.on("ReceiveOffer", async (offer, peerUser) => {
   console.log("STEP 3: offer received");
   offer = new RTCSessionDescription(JSON.parse(offer));
-  console.log(offer);
+  console.log("this is the offer", offer);
 
   let peering = new Peering(peerUser);
   peering.createPeerConnection();
@@ -261,6 +280,7 @@ connection.on("AddIceCandidate", (iceCandidate, peer) => {
   }
 });
 
+
 connection.on("PeerHasLeft", (peerClient) => {
   console.warn(peerClient + " left the room");
   localClient.deletePeeringWith(peerClient);
@@ -268,8 +288,20 @@ connection.on("PeerHasLeft", (peerClient) => {
 
 connection.on("userLeft", (peerClient) => {
   console.warn(peerClient + " left the call Room");
+  localClient.getUserMedia(false);
   localClient.deletePeeringWith(peerClient);
-  localClient.getUserMedia();
+  //connection.stop();
+});
+
+
+
+connection.on("locationser", (text) => {
+  console.log("testing...");
+  console.log("location math", text);
+});
+
+connection.on("asd", () => {
+  console.log("testing...123", );
 
 });
 
@@ -280,4 +312,19 @@ async function asyncForEach(array, callback) {
   for (let index = 0; index < array.length; index++) {
     await callback(array[index], index, array);
   }
+}
+
+
+export class UserConnection {
+  user: IUser;
+
+  constructor(user: IUser) {
+    this.user = user;
+  }
+
+}
+
+export interface IUser {
+  userName: string;
+  connectionId: string;
 }
