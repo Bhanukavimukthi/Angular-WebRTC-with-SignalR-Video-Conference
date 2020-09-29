@@ -77,6 +77,13 @@ export class LocalClient {
     else {
       console.log('Your browser does not support getUserMedia API');
     }
+
+    //declare your username
+    var para = document.createElement("P");
+    var t = document.createTextNode("You");
+    para.appendChild(t);
+    document.querySelector('.videoboard').appendChild(para);
+
   }
 
   getPeeringByPeerClient = (peerClient) => this.peerings.find(peering => peering.peerClient == peerClient);
@@ -107,11 +114,11 @@ class Peering {
     this.generatedId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
   }
 
-  createPeerConnection() {
+  createPeerConnection(userId) {
     this.peerConnection = new RTCPeerConnection(peerConnectionConfig);
     this.addTracksToPeerConnection(localClient.localStream);
     this.peerConnection.onicecandidate = (event) => this.onDetectIceCandidate(event, this.peerClient);
-    this.peerConnection.ontrack = (event) => this.gotRemoteStream(event);
+    this.peerConnection.ontrack = (event) => this.gotRemoteStream(event, userId);
   }
 
   async createOffer() {
@@ -157,9 +164,8 @@ class Peering {
     });
   }
 
-  gotRemoteStream(event) {
+  async gotRemoteStream(event, userId) {
     console.log('got remote stream');
-
     this.remoteVideo = document.getElementById(this.generatedId);
     if (!this.remoteVideo) {
       this.remoteVideo = document.createElement('video');
@@ -167,16 +173,26 @@ class Peering {
       this.remoteVideo.setAttribute('id', this.generatedId);
       this.remoteVideo.autoplay = true;
       this.remoteVideo.playsInline = true;
+      userName(userId);
       document.querySelector('.videoboard').appendChild(this.remoteVideo);
-
       //console.log("Video ID " + this.generatedId + " for displaying: " + peeringObj.clientAnswering + " or " + peeringObj.clientOffering);
     }
     console.log('got track', event.track, event.streams);
-    this.remoteStream = event.streams[0]
+    this.remoteStream = event.streams[0];
     this.remoteVideo.srcObject = this.remoteStream;
+
   }
 }
+async function userName(userId) {
+  //display users for component
+  let UserName = await connection.invoke("NameForID", userId);
+  console.log("UserName", UserName);
 
+  var para = document.createElement("P");
+  var t = document.createTextNode(UserName);
+  para.appendChild(t);
+  document.querySelector('.videoboard').appendChild(para);
+}
 
 /**
  * SCRIPT
@@ -195,22 +211,19 @@ export async function invokable_initVideoconference(roomId, userName) {
   await startPeerings();
 }
 
-async function startPeerings() {
+ async function startPeerings() {
   //create a peerConnection for each member of the hub
   try {
     let allCurrentUserInRoom = await connection.invoke("GetAllActiveConnectionsInRoom", localClient.roomId);
     allCurrentUserInRoom = JSON.parse(allCurrentUserInRoom);
     console.log("all users",allCurrentUserInRoom);
-    //console.log("adsfas");
-
-    //Users in Room
-    //connection.invoke("allUsers", localClient.roomId);
 
     // send offer for each person already in the room
     asyncForEach(allCurrentUserInRoom, async (user) => {
       let peering = new Peering(user["ConnectionId"]);
-      console.log("connectionID peering", user["ConnectionId"] );
-      peering.createPeerConnection();
+      await peering.createPeerConnection(user["ConnectionId"]);
+      console.log("asnycfor each user", user["ConnectionId"]);
+     // userName(user["ConnectionId"]);
       let offer = await peering.createOffer();
 
       await connection.invoke("SendOffer", JSON.stringify(offer), user["ConnectionId"]);
@@ -233,14 +246,13 @@ export async function closevideo(){
 }
 
 
-
 connection.on("ReceiveOffer", async (offer, peerUser) => {
   console.log("STEP 3: offer received");
   offer = new RTCSessionDescription(JSON.parse(offer));
   console.log("this is the offer", offer);
 
   let peering = new Peering(peerUser);
-  peering.createPeerConnection();
+  peering.createPeerConnection(peerUser);
 
   // insert the offer as the remote description
   await peering.peerConnection.setRemoteDescription(offer);
@@ -295,15 +307,15 @@ connection.on("userLeft", (peerClient) => {
 
 
 
-connection.on("locationser", (text) => {
+connection.on("allUsers", (allUsers) => {
   console.log("testing...");
-  console.log("location math", text);
+  console.log("Group Users", allUsers);
 });
 
-connection.on("asd", () => {
-  console.log("testing...123", );
+//connection.on("asd", () => {
+//  console.log("testing...123", );
 
-});
+//});
 
 
 

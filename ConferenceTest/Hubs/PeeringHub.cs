@@ -7,10 +7,6 @@ using System.Text.Json;
 
 namespace ConferenceTest.Hubs
 {
-    public interface users
-    {
-
-    }
 
     public static class Users
     {
@@ -45,8 +41,8 @@ namespace ConferenceTest.Hubs
             if (CurrentConnections.Any(x => x.RoomId == roomId) == true)
             {
 
-                var temp = CurrentConnections.Where(x => x.RoomId == roomId);
-                await Clients.Group(roomId).SendAsync("locationser", temp);
+                var allUsers = CurrentConnections.Where(x => x.RoomId == roomId);
+                await Clients.Group(roomId).SendAsync("allUsers", allUsers);
             }
             Console.WriteLine("The client " + userName + " has been added to the room " + roomId);
 
@@ -55,6 +51,7 @@ namespace ConferenceTest.Hubs
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
+
             try
             {
                 // we get the room in which the user was
@@ -106,15 +103,6 @@ namespace ConferenceTest.Hubs
         public async Task test(string peeruser)
             => await Clients.Client(peeruser).SendAsync("testreceived");
 
-        //public async Task allUsers(string roomId)
-        //{
-        //    if (CurrentConnections.Any(x => x.RoomId == roomId) == true)
-        //    {
-        //        await Clients.Group(roomId).SendAsync("locationser", CurrentConnections);
-        //    }
-
-        //}
-
         //public async Task SendIceCandidate(string candidate, string peerUser)
         //    => await Clients.Client(peerUser).SendAsync("ReceiveIceCandidate", candidate, Context.ConnectionId);
 
@@ -122,8 +110,20 @@ namespace ConferenceTest.Hubs
         public string GetAllActiveConnectionsInRoom(string roomId)
 
             => JsonSerializer.Serialize(CurrentConnections.Where(user => user.RoomId == roomId && user.ConnectionId != Context.ConnectionId).ToList());
-            
+
+
+        public string NameForID(string ConnectionId)
+        {
+            UserInRoom person = CurrentConnections.FirstOrDefault(p => p.ConnectionId == ConnectionId);
+            // => UserDetails(ConnectionId);
+            //=> JsonSerializer.Serialize(CurrentConnections.Where(user => user.ConnectionId == ConnectionId && user.ConnectionId != Context.ConnectionId).ToList());
+            return person.UserName;
+        }
+    
+
     }
+
+
     //public void asd()
     //{
     //    System.Diagnostics.Debug.WriteLine("blah");

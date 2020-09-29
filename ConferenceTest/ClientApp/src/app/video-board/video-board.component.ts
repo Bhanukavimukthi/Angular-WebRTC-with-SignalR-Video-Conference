@@ -5,6 +5,8 @@ import { UserConnection } from '../signalr.service';
 @Component({
   selector: 'app-video-board',
   templateUrl: './video-board.component.html',
+  styleUrls: ['./video-board.component.css']
+
 
 })
 export class VideoBoardComponent implements OnInit {
