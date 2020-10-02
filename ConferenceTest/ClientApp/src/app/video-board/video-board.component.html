@@ -6,10 +6,11 @@
 
 <div class="toolbar-connectivity">
   <ul>
-    <li><button class="btn"><span class="oi oi-monitor" aria-hidden="true"></span> Start</button></li>
-    <li><button class="btn"><span class="oi oi-camera-slr" aria-hidden="true"></span> Disable camera</button></li>
-    <li><button class="btn"><span class="oi oi-microphone" aria-hidden="true"></span> Disable microphone</button></li>
-    <li><button class="btn btn-lg btn-outline-primary" (click)="click()">Quit the videoconference</button></li>
+    <!--<li><button class="btn"><span class="oi oi-monitor" aria-hidden="true"></span> Start</button></li>-->
+    <li><button class="btn btn-lg btn-outline-primary" (click)="Cam()">Disable Camera</button></li>
+    <li><button class="btn btn-lg btn-outline-primary" (click)="CamOn()">Enable Camera</button></li>
+    <li><button class="btn btn-lg btn-outline-primary" (click)="Mic()">Disable Microphone</button></li>
+    <li><button class="btn btn-lg btn-outline-primary" (click)="Quit()">Quit the videoconference</button></li>
   </ul>
 </div>
 <div style="">

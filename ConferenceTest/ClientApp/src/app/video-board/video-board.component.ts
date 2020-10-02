@@ -1,5 +1,5 @@
-import { Component, OnInit, ViewChild, ElementRef, Input } from '@angular/core';
-import { UserConnection } from '../signalr.service';
+import { Component, OnInit} from '@angular/core';
+import * as service from '../signalr.service';
 
 
 @Component({
@@ -10,20 +10,29 @@ import { UserConnection } from '../signalr.service';
 
 })
 export class VideoBoardComponent implements OnInit {
-  @Input()
-  user: UserConnection;
-
   joined = false;
+  video = document.getElementById("localVideo");
+
 
   constructor() { }
 
 
-  click() {
-    //closevideo();
-    window.location.reload();
+  Cam() {
+    //let stop = k => this.video.srcObject.getTracks().forEach(t => t.kind == k && t.stop());
+    service.cameraOff(false);
+  }
+
+  CamOn() {
+    service.cameraOn(true);
+  }
+
+  Mic() {
 
   }
 
+  Quit() {
+    window.location.reload();
+  }
 
   ngOnInit() {}
 

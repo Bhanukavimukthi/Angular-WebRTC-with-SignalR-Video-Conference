@@ -3,6 +3,8 @@ import * as signalR from '@aspnet/signalr';
 import { connect } from 'http2';
 import 'webrtc-adapter';
 import 'webrtc';
+import { async } from '@angular/core/testing';
+import { Stream } from 'stream';
 
 /**
  * HUB CONNECTION AND CONFIGURATION
@@ -29,46 +31,39 @@ async function start() {
 start();
 
 
+let localVideo: any;
+let stream: any;
+let trackStream: any;
+let tracks: any;
+
 export class LocalClient {
-  roomId: any;
+    roomId: any;
     userName: any;
     userMedia: any;
     localStream: any;
-    localVideo: any;
+
     peerings: any[];
   constructor(roomId, userName) {
     this.roomId = roomId;
     this.userName = userName;
-
     this.userMedia;
     this.localStream;
-    this.localVideo;
-
     this.peerings = [];
-
     this.getPeeringByPeerClient;
   }
 
-  async getUserMedia(streamstatus: boolean) {
+  async getUserMedia() {
     if (navigator.getUserMedia) {
       try {
-        this.localVideo = document.getElementById('localVideo');
-        const constraints = { 'video': true, 'audio': true };
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        const tracks = stream.getTracks();
-        if (streamstatus = true) {
+          let constraints = { 'video': true, 'audio': true };
+          stream = await navigator.mediaDevices.getUserMedia(constraints);
           this.localStream = stream;
+          localVideo = document.getElementById('localVideo');
+        localVideo.srcObject = stream;
 
-          this.localVideo.srcObject = stream;
-        }
-        else {
-          tracks.forEach(function (track) {
-            track.stop();
-          });
-          this.localStream = null;
-          this.localVideo.srcObject = null;
-
-        }
+        //for tacking
+        trackStream = localVideo.srcObject;
+        tracks = trackStream.getTracks();
       } catch (err) {
         console.error('Error getting user media.', err);
       }
@@ -77,13 +72,15 @@ export class LocalClient {
     else {
       console.log('Your browser does not support getUserMedia API');
     }
+  }
 
+
+  async displayname() {
     //declare your username
-    var para = document.createElement("P");
+    var para = document.createElement("h3");
     var t = document.createTextNode("You");
     para.appendChild(t);
     document.querySelector('.videoboard').appendChild(para);
-
   }
 
   getPeeringByPeerClient = (peerClient) => this.peerings.find(peering => peering.peerClient == peerClient);
@@ -94,21 +91,19 @@ export class LocalClient {
     remoteVideoToDelete.remove();
     this.peerings = this.peerings.filter(peering => peering.peerClient != peerClient)
   }
+
 }
 
 const peerConnectionConfig = { 'iceServers': [{ 'urls': 'stun:stun.services.mozilla.com' }, { 'urls': 'stun:stun.l.google.com:19302' }] };
 class Peering {
   peerClient: any;
- // userName: any;
     peerConnection: any;
     remoteVideo: any;
     remoteStream: any;
     generatedId: string;
   constructor(peerClient) {
     this.peerClient = peerClient;
- //   this.userName = userName
     this.peerConnection;
-
     this.remoteVideo;
     this.remoteStream;
     this.generatedId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
@@ -165,16 +160,29 @@ class Peering {
   }
 
   async gotRemoteStream(event, userId) {
+    var UserName = await userName(userId);
     console.log('got remote stream');
+    var div = document.getElementById(this.generatedId);
     this.remoteVideo = document.getElementById(this.generatedId);
     if (!this.remoteVideo) {
+      //videotag
       this.remoteVideo = document.createElement('video');
       this.remoteVideo.classList.add('video');
-      this.remoteVideo.setAttribute('id', this.generatedId);
+      //this.remoteVideo.setAttribute('id', this.generatedId);
       this.remoteVideo.autoplay = true;
       this.remoteVideo.playsInline = true;
-      userName(userId);
-      document.querySelector('.videoboard').appendChild(this.remoteVideo);
+
+      //username tag
+      var para = document.createElement("h3");
+      var t = document.createTextNode(UserName);
+      para.appendChild(t);
+
+      //append tag for video tag & username tag
+      div = document.createElement('div');
+      div.setAttribute('id', this.generatedId);
+      div.append(this.remoteVideo, para);
+      //append child div tag
+      document.querySelector('.videoboard').appendChild(div);
       //console.log("Video ID " + this.generatedId + " for displaying: " + peeringObj.clientAnswering + " or " + peeringObj.clientOffering);
     }
     console.log('got track', event.track, event.streams);
@@ -186,12 +194,7 @@ class Peering {
 async function userName(userId) {
   //display users for component
   let UserName = await connection.invoke("NameForID", userId);
-  console.log("UserName", UserName);
-
-  var para = document.createElement("P");
-  var t = document.createTextNode(UserName);
-  para.appendChild(t);
-  document.querySelector('.videoboard').appendChild(para);
+  return UserName;
 }
 
 /**
@@ -206,10 +209,13 @@ export async function invokable_initVideoconference(roomId, userName) {
   console.log("Room Name", roomId);
   // Creating local profil and start to display own video
   localClient = new LocalClient(roomId, userName);
-  await localClient.getUserMedia(true);
+  await localClient.getUserMedia();
+  await localClient.displayname();
 
   await startPeerings();
 }
+
+export { localClient };
 
  async function startPeerings() {
   //create a peerConnection for each member of the hub
@@ -237,13 +243,26 @@ export async function invokable_initVideoconference(roomId, userName) {
   }
 }
 
-export async function closevideo(){
-   connection.invoke("userleft").catch(err => console.error(err));
-  localClient.getUserMedia();
-  console.log("video closed");
-   //connection.stop();
 
+export async function cameraOn(e) {
+  for (var i = 0; i < tracks.length; i++) {
+    var track = tracks[i];
+    track.enabled = e;
+  }
+  localVideo.srcObject = stream;
 }
+
+export async function cameraOff(e) {
+  for (var i = 0; i < tracks.length; i++) {
+    var track = tracks[i];
+    track.enabled = e;
+  }
+
+  localVideo.srcObject = null;
+}
+
+
+
 
 
 connection.on("ReceiveOffer", async (offer, peerUser) => {
@@ -306,17 +325,9 @@ connection.on("userLeft", (peerClient) => {
 });
 
 
-
 connection.on("allUsers", (allUsers) => {
-  console.log("testing...");
-  console.log("Group Users", allUsers);
+  console.log("Users in the group", allUsers);
 });
-
-//connection.on("asd", () => {
-//  console.log("testing...123", );
-
-//});
-
 
 
 //helper to do foreach with async
@@ -326,17 +337,3 @@ async function asyncForEach(array, callback) {
   }
 }
 
-
-export class UserConnection {
-  user: IUser;
-
-  constructor(user: IUser) {
-    this.user = user;
-  }
-
-}
-
-export interface IUser {
-  userName: string;
-  connectionId: string;
-}
